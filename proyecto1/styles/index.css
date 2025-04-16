@@ -1,0 +1,24 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+header {
+    background: rgb(255, 143, 143);
+    display: grid;
+    grid-template-columns: 120px auto;
+    align-items: center;
+}
+
+nav ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    justify-items: center;
+}
+
+.hero {
+    height: 80vh;
+    width: 100vw;
+    background-color: aqua;
+}
+
