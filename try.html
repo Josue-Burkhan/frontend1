@@ -11,7 +11,6 @@
     - El formulario es multistep, solo un paso visible a la vez.
     - El tema claro/oscuro afecta toda la página.
     - Para agregar un paso, añade un div.form-step dentro del form.
-    - Para agregar una plantilla, añade la opción en el select y en los objetos JS.
 -->
 
 <!DOCTYPE html>
@@ -20,7 +19,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wild Fantasy Writers - Crear Mundo</title>
-  <link rel="stylesheet" href="try.css" />
+  <link rel="stylesheet" href="/form/try.css" />
   <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     /* OVERRIDES Y NUEVOS ESTILOS PARA LOOK 'TYPEFORM' */
@@ -224,6 +223,59 @@
     textarea {
       padding: 8px 5px;
     }
+
+    /* Estilos para las categorías personalizadas */
+    .custom-categories {
+      margin-top: 1.5rem;
+    }
+
+    .chip-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.7em;
+      margin-top: 0.7em;
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 0.5em 1.3em;
+      border: 1.5px solid #888;
+      border-radius: 2em;
+      background: transparent;
+      color: #222;
+      font-size: 1.1em;
+      font-weight: 500;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    body[data-theme='dark'] .chip {
+      border-color: #bbb;
+      color: #eee;
+    }
+    .chip:hover {
+      background: #e0f7fa;
+      border-color: #00b8b8;
+      color: #00b8b8;
+      cursor: pointer;
+    }
+    body[data-theme='dark'] .chip:hover {
+      background: #263238;
+      border-color: #00b8b8;
+      color: #00b8b8;
+    }
+    .chip.selected {
+      background: #00b8b8;
+      color: #fff;
+      border-color: #00b8b8;
+    }
+    body[data-theme='dark'] .chip.selected {
+      background: #00e6e6;
+      color: #232327;
+      border-color: #00e6e6;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -286,18 +338,39 @@
             <!-- Paso 4 -->
             <div class="form-step" id="step4">
               <label for="worldImages" class="label-upload">📷 Sube una imagen de fondo para tu mundo:</label>
-              <input type="file" id="worldImages" name="worldImages" accept="image/*" />
+              <input type="file" id="worldImages" name="worldImages" accept="image/*" multiple />
               <div class="form-buttons">
                 <button type="button" onclick="prevStep()">Anterior</button>
                 <button type="submit" class="btn-create">Crear Mundo</button>
               </div>
             </div>
+            <!-- Sección de categorías personalizadas -->
+            <div id="customCategoriesSection" class="custom-categories" style="display:none;">
+              <label>Categorías para tu mundo personalizado:</label>
+              <div class="chip-list">
+                <span class="chip">characters</span>
+                <span class="chip">locations</span>
+                <span class="chip">factions</span>
+                <span class="chip">items</span>
+                <span class="chip">events</span>
+                <span class="chip">languages</span>
+                <span class="chip">abilities</span>
+                <span class="chip">technology</span>
+                <span class="chip">powerSystem</span>
+                <span class="chip">creatures</span>
+                <span class="chip">religion</span>
+                <span class="chip">story</span>
+                <span class="chip">races</span>
+                <span class="chip">economy</span>
+              </div>
+            </div>
+            <input type="hidden" name="customCategories" id="customCategoriesInput" />
           </form>
         </div>
       </div>
     </div>
     <!-- Botón de cambio de tema -->
-    <button class="theme-toggle" onclick="toggleTheme()">🌓 Cambiar tema</button>
+    <button class="theme-toggle" onclick="toggleTheme()">🌓</button>
   </div>
 
   <!-- =========================
@@ -325,6 +398,7 @@
       const labelUpload = document.querySelector('.label-upload');
       const container = document.getElementById('dynamicFormContainer');
       const mainContent = document.querySelector('.main-content');
+      const customCategoriesSection = document.getElementById('customCategoriesSection');
 
       // Controla el paso actual
       let currentStepIndex = 0;
@@ -380,6 +454,12 @@
         } else {
           mainContent.style.backgroundImage = 'none';
         }
+        
+        if (templateSelect.value === 'custom') {
+          customCategoriesSection.style.display = 'block';
+        } else {
+          customCategoriesSection.style.display = 'none';
+        }
       }
 
       // Cambia descripción y fondo al cambiar plantilla
@@ -388,9 +468,12 @@
       // Cambia texto del label al seleccionar imagen
       if (imageInput && labelUpload) {
         imageInput.addEventListener('change', () => {
-          labelUpload.textContent = imageInput.files.length > 0
-            ? "📷 " + imageInput.files[0].name
-            : "📷 Sube una imagen de fondo para tu mundo:";
+          if (imageInput.files.length > 0) {
+            const names = Array.from(imageInput.files).map(f => f.name).join(', ');
+            labelUpload.textContent = "📷 " + names;
+          } else {
+            labelUpload.textContent = "📷 Sube una imagen de fondo para tu mundo:";
+          }
         });
       }
 
@@ -435,6 +518,12 @@
           }
         });
         if (valid && currentStepIndex < formSteps.length - 1) {
+          // Mostrar u ocultar sección de categorías personalizadas
+          if (currentStepIndex === 2 && templateSelect.value === 'custom') {
+            customCategoriesSection.style.display = 'block';
+          } else {
+            customCategoriesSection.style.display = 'none';
+          }
           showStep(currentStepIndex + 1);
         }
       };
@@ -448,6 +537,23 @@
       // Iniciar en el primer paso
       showStep(0);
       updateStyle();
+
+      // Manejo de categorías personalizadas
+      const chipList = customCategoriesSection.querySelector('.chip-list');
+      let selectedCategories = [];
+
+      chipList.addEventListener('click', function(e) {
+        if (e.target.classList.contains('chip')) {
+          const value = e.target.textContent.trim();
+          e.target.classList.toggle('selected');
+          if (e.target.classList.contains('selected')) {
+            if (!selectedCategories.includes(value)) selectedCategories.push(value);
+          } else {
+            selectedCategories = selectedCategories.filter(cat => cat !== value);
+          }
+        }
+        document.getElementById('customCategoriesInput').value = selectedCategories.join(',');
+      });
     });
 
     // Cambia el tema claro/oscuro
